@@ -5,10 +5,11 @@ export interface TimeRange {
   start: string;
   end: string;
 }
-
-export async function extractTimeRange(
-  imageFile: File
-): Promise<TimeRange[] | null> {
+export interface ScanResult {
+  timeRanges: TimeRange[] | null;
+  cleanedOCR: string;
+}
+export async function extractTimeRange(imageFile: File): Promise<ScanResult> {
   const worker = await createWorker("eng");
 
   try {
@@ -23,7 +24,7 @@ export async function extractTimeRange(
 
     const {
       data: { text },
-    } = await worker.recognize(imageFile);
+    } = await worker.recognize(imageFile, {});
 
     // Add validation function
     const isValidTime = (time: string): boolean => {
@@ -40,6 +41,8 @@ export async function extractTimeRange(
 
     // Clean up text by removing unwanted spaces and normalizing time formats
     const cleanedText = text
+      // Preserve newlines by temporarily replacing them
+      .replace(/\n/g, "{{NEWLINE}}")
       .replace(/\s+/g, " ")
       .replace(/(\d)(?=[A-Z])/g, "$1 ")
       .replace(/[hH]/g, ":")
@@ -50,14 +53,29 @@ export async function extractTimeRange(
       // Then handle single times (1530 -> 15:30)
       .replace(/(\d{2})(\d{2}(?!\d))/g, "$1:$2")
       // Finally separate day markers
-      .replace(/([T][2-7])(\d)/g, "$1 $2");
+      .replace(/([T][2-7])(\d)/g, "$1 $2")
+      // Restore newlines
+      .replace(/{{NEWLINE}}/g, "\n");
 
+    console.log("Original OCR Result:", text);
     console.log("Cleaned OCR Result:", cleanedText);
 
     // Updated pattern to make day part optional
     const timePattern =
       /(?:T([2-7]))?\s*(\d{1,2}[:.]?\d{2})[:.]?\s*[-]?\s*(\d{1,2}[:.]?\d{2})/gi;
+    const uncleandMatches = Array.from(text.matchAll(timePattern));
     const matches = cleanedText.matchAll(timePattern);
+
+    // for (const m of Array.from(exactMatches)) {
+    //   console.log(m);
+    //   const index = remainingText.indexOf(m[0]);
+    //   if (index !== -1) {
+    //     remainingText =
+    //       remainingText.substring(0, index) +
+    //       remainingText.substring(index + m[0].length);
+    //   }
+    // }
+    console.log(uncleandMatches);
 
     const dayMap: { [key: string]: string } = {
       T2: "Monday",
@@ -68,20 +86,24 @@ export async function extractTimeRange(
       T7: "Saturday",
     };
 
+    const filteredOutMatches: RegExpExecArray[] = [];
     const allMatches = Array.from(matches);
     console.log("Found matches:", allMatches.length);
 
     // Filter valid times only
-    const validMatches = allMatches.filter(
-      (match) => isValidTime(match[2]) && isValidTime(match[3])
-    );
+    const validMatches = allMatches.filter((match) => {
+      if (isValidTime(match[2]) && isValidTime(match[3])) return true;
+      filteredOutMatches.push(match);
+      return false;
+    });
+
+    console.log("Filtered out matches:", filteredOutMatches);
 
     // Add debug logging
-    console.log("Valid matches raw:", validMatches);
 
     if (validMatches.length === 0) {
       console.warn("No valid time ranges found");
-      return null;
+      return { timeRanges: null, cleanedOCR: cleanedText };
     }
 
     const results = validMatches.map((match) => {
@@ -99,12 +121,15 @@ export async function extractTimeRange(
         start: formatTime(match[2]),
         end: formatTime(match[3]),
       };
-      console.log("Processed time range:", timeRange);
       return timeRange;
     });
 
-    console.log("Final results:", results);
-    return results;
+    // Before return, add visualization
+
+    return {
+      timeRanges: results,
+      cleanedOCR: cleanedText,
+    };
   } finally {
     await worker.terminate();
   }

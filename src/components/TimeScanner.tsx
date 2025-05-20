@@ -5,12 +5,36 @@ import {
 } from "../TesseractScanner/extractTimeRange";
 
 interface TimeScannerProps {
+  timeRanges: TimeRange[];
   onTimeRangesUpdate: Dispatch<SetStateAction<TimeRange[]>>;
 }
 
-export const TimeScanner = ({ onTimeRangesUpdate }: TimeScannerProps) => {
+export const TimeScanner = ({
+  timeRanges,
+  onTimeRangesUpdate,
+}: TimeScannerProps) => {
   const [result, setResult] = useState<string>("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
+
+  const [cleanedText, setCleanedText] = useState<string>("");
+
+  const renderCleanedText = () => {
+    return (
+      <div>
+        <h3>Cleaned OCR Result:</h3>
+        {cleanedText.split("\n").map((line, index) => (
+          <div key={index}>
+            {/* if line contain one of element in time ranges, highlight it */}
+            {timeRanges.some((range) => line.includes(range.start)) ? (
+              <span style={{ backgroundColor: "yellow" }}>{line}</span>
+            ) : (
+              line
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   const processImage = async (file: File) => {
     setResult("Processing...");
@@ -18,14 +42,16 @@ export const TimeScanner = ({ onTimeRangesUpdate }: TimeScannerProps) => {
     setPreviewUrl(url);
 
     try {
-      const timeRange = await extractTimeRange(file);
-      if (timeRange?.length) {
-        setResult("Time ranges found");
-        onTimeRangesUpdate(timeRange);
-        console.log("Extracted time ranges:", timeRange);
+      const { timeRanges, cleanedOCR } = await extractTimeRange(file);
+      setCleanedText(cleanedOCR);
+      if (timeRanges?.length) {
+        setResult("Time ranges found: " + timeRanges.length);
+        onTimeRangesUpdate(timeRanges);
+        console.log("Extracted time ranges:", timeRanges);
       } else {
         setResult("No time range found");
         onTimeRangesUpdate([]);
+        setCleanedText("");
       }
     } catch (error) {
       console.error("OCR failed:", error);
@@ -73,6 +99,7 @@ export const TimeScanner = ({ onTimeRangesUpdate }: TimeScannerProps) => {
         </div>
       )}
       <p>{result}</p>
+      {cleanedText && renderCleanedText()}
     </div>
   );
 };

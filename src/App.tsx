@@ -54,7 +54,7 @@ function App() {
 
   return (
     <div>
-      <TimeScanner onTimeRangesUpdate={setTimeRanges} />
+      <TimeScanner onTimeRangesUpdate={setTimeRanges} timeRanges={timeRanges} />
       <button onClick={generateBoxes}>Create boxes from scanned OCR</button>
       <p>Drag and drop functionality will be implemented here.</p>
       <DragDrop ref={dragDropRef} />
