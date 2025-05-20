@@ -1,4 +1,4 @@
-import { useState, type Dispatch, type SetStateAction } from "react";
+import { useState, type Dispatch, type SetStateAction, useEffect } from "react";
 import {
   extractTimeRange,
   type TimeRange,
@@ -12,12 +12,8 @@ export const TimeScanner = ({ onTimeRangesUpdate }: TimeScannerProps) => {
   const [result, setResult] = useState<string>("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const processImage = async (file: File) => {
     setResult("Processing...");
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Create preview URL
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
 
@@ -37,9 +33,36 @@ export const TimeScanner = ({ onTimeRangesUpdate }: TimeScannerProps) => {
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processImage(file);
+  };
+
+  const handlePaste = async (e: ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.type.startsWith("image")) {
+        const file = item.getAsFile();
+        if (file) {
+          await processImage(file);
+          break;
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("paste", handlePaste);
+    return () => window.removeEventListener("paste", handlePaste);
+  }, []);
+
   return (
     <div>
       <input type="file" accept="image/*" onChange={handleImageUpload} />
+      <p>Or paste an image (Ctrl+V)</p>
       {previewUrl && (
         <div style={{ marginTop: "1rem" }}>
           <img
