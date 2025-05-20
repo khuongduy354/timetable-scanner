@@ -9,6 +9,35 @@ export interface ScanResult {
   timeRanges: TimeRange[] | null;
   cleanedOCR: string;
 }
+
+const isValidTime = (time: string): boolean => {
+  const [hours, minutes] = time.split(":").map(Number);
+  return (
+    !isNaN(hours) &&
+    !isNaN(minutes) &&
+    hours >= 0 &&
+    hours <= 23 &&
+    minutes >= 0 &&
+    minutes <= 59
+  );
+};
+
+const formatTime = (time: string) => {
+  const [hours, minutes] = time.split(":").map(Number);
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}`;
+};
+
+const dayMap: { [key: string]: string } = {
+  T2: "Monday",
+  T3: "Tuesday",
+  T4: "Wednesday",
+  T5: "Thursday",
+  T6: "Friday",
+  T7: "Saturday",
+};
+
 export async function extractTimeRange(imageFile: File): Promise<ScanResult> {
   const worker = await createWorker("eng");
 
@@ -25,19 +54,6 @@ export async function extractTimeRange(imageFile: File): Promise<ScanResult> {
     const {
       data: { text },
     } = await worker.recognize(imageFile, {});
-
-    // Add validation function
-    const isValidTime = (time: string): boolean => {
-      const [hours, minutes] = time.split(":").map(Number);
-      return (
-        !isNaN(hours) &&
-        !isNaN(minutes) &&
-        hours >= 0 &&
-        hours <= 23 &&
-        minutes >= 0 &&
-        minutes <= 59
-      );
-    };
 
     // Clean up text by removing unwanted spaces and normalizing time formats
     const cleanedText = text
@@ -77,15 +93,6 @@ export async function extractTimeRange(imageFile: File): Promise<ScanResult> {
     // }
     console.log(uncleandMatches);
 
-    const dayMap: { [key: string]: string } = {
-      T2: "Monday",
-      T3: "Tuesday",
-      T4: "Wednesday",
-      T5: "Thursday",
-      T6: "Friday",
-      T7: "Saturday",
-    };
-
     const filteredOutMatches: RegExpExecArray[] = [];
     const allMatches = Array.from(matches);
     console.log("Found matches:", allMatches.length);
@@ -107,14 +114,6 @@ export async function extractTimeRange(imageFile: File): Promise<ScanResult> {
     }
 
     const results = validMatches.map((match) => {
-      // Ensure time format is consistent (add leading zeros if needed)
-      const formatTime = (time: string) => {
-        const [hours, minutes] = time.split(":").map(Number);
-        return `${hours.toString().padStart(2, "0")}:${minutes
-          .toString()
-          .padStart(2, "0")}`;
-      };
-
       const dayKey = match[1] ? `T${match[1]}` : null;
       const timeRange = {
         day: dayKey && dayMap[dayKey] ? dayMap[dayKey] : "Unknown",

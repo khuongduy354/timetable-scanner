@@ -3,6 +3,7 @@ import {
   extractTimeRange,
   type TimeRange,
 } from "../TesseractScanner/extractTimeRange";
+import { ImagePreview } from "./ImagePreview";
 
 interface TimeScannerProps {
   timeRanges: TimeRange[];
@@ -89,16 +90,7 @@ export const TimeScanner = ({
     <div>
       <input type="file" accept="image/*" onChange={handleImageUpload} />
       <p>Or paste an image (Ctrl+V)</p>
-      {previewUrl && (
-        <div style={{ marginTop: "1rem" }}>
-          <img
-            src={previewUrl}
-            alt="Preview"
-            style={{ maxWidth: "100%", maxHeight: "300px" }}
-          />
-        </div>
-      )}
-      <p>{result}</p>
+      <ImagePreview previewUrl={previewUrl} result={result} />
       {cleanedText && renderCleanedText()}
     </div>
   );

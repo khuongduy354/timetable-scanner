@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import DragDrop, { type DragDropHandle } from "./components/DragDrop";
+import DragDrop, { type DragDropHandle } from "./components/DragDrop/index";
 import { TimeScanner } from "./components/TimeScanner";
 import { type WeeklyCalendar } from "./types/Calendar";
 import { type TimeRange } from "./TesseractScanner/extractTimeRange";
