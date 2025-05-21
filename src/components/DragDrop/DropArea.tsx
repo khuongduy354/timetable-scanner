@@ -28,7 +28,9 @@ export function DropArea({ area, onDrop, onDelete, onEdit }: DropAreaProps) {
         backgroundColor: isOver ? "#f0f0f0" : "white",
         border: "1px solid #ccc",
         borderRadius: "4px",
-        minHeight: "100px",
+        minHeight: "200px", // Increased from 100px
+        maxHeight: "400px",
+        overflowY: "auto",
       }}
     >
       <h3 style={{ margin: "0 0 8px 0", fontSize: "14px" }}>{area.id}</h3>

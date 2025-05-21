@@ -1,6 +1,7 @@
 import { type TimeRange } from "../TesseractScanner/extractTimeRange";
 
 export interface DaySchedule {
+  title: string;
   dayName: string;
   timeSlots: TimeRange[];
 }

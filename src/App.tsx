@@ -56,25 +56,30 @@ function AppContent() {
     setShouldGenerateBoxes(true);
   };
 
+  const resetCalendar = () => {
+    setCalendarData(null);
+  };
+
   const generateCalendar = () => {
     if (!dragDropRef.current) return;
 
     const areas = dragDropRef.current.getAreasState();
     const calendar: WeeklyCalendar = {
-      Monday: { dayName: "Monday", timeSlots: [] },
-      Tuesday: { dayName: "Tuesday", timeSlots: [] },
-      Wednesday: { dayName: "Wednesday", timeSlots: [] },
-      Thursday: { dayName: "Thursday", timeSlots: [] },
-      Friday: { dayName: "Friday", timeSlots: [] },
-      Saturday: { dayName: "Saturday", timeSlots: [] },
-      Sunday: { dayName: "Sunday", timeSlots: [] },
+      Monday: { title: "Monday", dayName: "Monday", timeSlots: [] },
+      Tuesday: { title: "Tuesday", dayName: "Tuesday", timeSlots: [] },
+      Wednesday: { title: "Wednesday", dayName: "Wednesday", timeSlots: [] },
+      Thursday: { title: "Thursday", dayName: "Thursday", timeSlots: [] },
+      Friday: { title: "Friday", dayName: "Friday", timeSlots: [] },
+      Saturday: { title: "Saturday", dayName: "Saturday", timeSlots: [] },
+      Sunday: { title: "Sunday", dayName: "Sunday", timeSlots: [] },
     };
 
     areas.forEach((area) => {
       area.boxes.forEach((box) => {
-        const timeRange = box.content;
+        const timeRange = { ...box.content, title: area.id || "Untitled" };
         if (timeRange.day && timeRange.day in calendar) {
           calendar[timeRange.day].timeSlots.push(timeRange);
+          calendar[timeRange.day].title = area.id || "Untitled"; // Set the title for the calendar
         }
       });
     });
@@ -254,6 +259,12 @@ function AppContent() {
             </div>
             <div style={{ padding: "15px" }}>
               <CalendarView calendar={calendarData} />
+              <button
+                onClick={resetCalendar}
+                style={{ width: "100%", marginTop: "10px" }}
+              >
+                Reset Calendar
+              </button>
             </div>
           </div>
         )}

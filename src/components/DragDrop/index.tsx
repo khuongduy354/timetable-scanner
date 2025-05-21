@@ -239,15 +239,16 @@ const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", // Increased from 200px
+            gridTemplateColumns: "repeat(4, 1fr)", // Fixed 4 columns instead of auto-fit
             gap: "15px",
             padding: "10px",
             backgroundColor: "#f9f9f9",
             borderRadius: "6px",
-            overflow: "auto",
+            overflowY: "auto",
+            overflowX: "hidden",
             width: "100%",
-            maxWidth: "1200px", // Increased from 800px
-            maxHeight: "1000px", // Increased from 600px to 1000px for more vertical space
+            maxWidth: "1200px",
+            height: "calc(100vh - 250px)", // Use viewport height instead of fixed height
           }}
         >
           {areas.map((area) => (

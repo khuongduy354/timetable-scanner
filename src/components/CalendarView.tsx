@@ -51,7 +51,7 @@ export const CalendarView = ({ calendar }: CalendarViewProps) => {
         end.setHours(endHour, endMinute);
 
         events.push({
-          title: "Class",
+          title: data.title,
           start,
           end,
         });
