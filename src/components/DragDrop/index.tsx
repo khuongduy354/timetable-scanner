@@ -146,14 +146,8 @@ const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
   };
 
   const handleDeleteArea = (areaId: string) => {
-    // Prevent deletion of Source area
     if (areaId === "Source") return;
-
     setAreas((prevAreas) => prevAreas.filter((area) => area.id !== areaId));
-    // Reset selection to Source if deleted area was selected
-    if (selectedAreaId === areaId) {
-      setSelectedAreaId("Source");
-    }
   };
 
   useImperativeHandle(ref, () => ({
@@ -278,6 +272,7 @@ const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
               onDrop={handleDrop}
               onDelete={handleDeleteBox}
               onEdit={handleEditBox}
+              onAreaDelete={handleDeleteArea}
             />
           ))}
         </div>

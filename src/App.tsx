@@ -124,6 +124,16 @@ function AppContent() {
     return calendar;
   };
 
+  const clearDragDrop = () => {
+    if (!dragDropRef.current) return;
+    setAreas((prev) => prev.map((area) => ({ ...area, boxes: [] })));
+  };
+
+  const clearAllAreas = () => {
+    if (!dragDropRef.current) return;
+    setAreas([]);
+  };
+
   return (
     <div
       style={{
@@ -242,12 +252,17 @@ function AppContent() {
             </div>
             <div style={{ padding: "15px" }}>
               <DragDrop ref={dragDropRef} />
-              <button
-                onClick={generateCalendar}
-                style={{ width: "100%", marginTop: "10px" }}
-              >
-                Create Calendar from boxes
-              </button>
+              <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+                <button onClick={generateCalendar} style={{ flex: 1 }}>
+                  Create Calendar from boxes
+                </button>
+                <button onClick={clearDragDrop} style={{ flex: 1 }}>
+                  Clear All Boxes
+                </button>
+                <button onClick={clearAllAreas} style={{ flex: 1 }}>
+                  Clear All Areas
+                </button>
+              </div>
             </div>
           </div>
         )}

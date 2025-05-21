@@ -7,9 +7,16 @@ interface DropAreaProps {
   onDrop: (item: Box, targetAreaId: string) => void;
   onDelete: (boxId: string) => void;
   onEdit: (boxId: string, newContent: any) => void;
+  onAreaDelete?: (areaId: string) => void;
 }
 
-export function DropArea({ area, onDrop, onDelete, onEdit }: DropAreaProps) {
+export function DropArea({
+  area,
+  onDrop,
+  onDelete,
+  onEdit,
+  onAreaDelete,
+}: DropAreaProps) {
   const [{ isOver }, drop] = useDrop(() => ({
     accept: "box",
     drop: (item: Box) => {
@@ -33,7 +40,30 @@ export function DropArea({ area, onDrop, onDelete, onEdit }: DropAreaProps) {
         overflowY: "auto",
       }}
     >
-      <h3 style={{ margin: "0 0 8px 0", fontSize: "14px" }}>{area.id}</h3>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "10px",
+        }}
+      >
+        <h3 style={{ margin: 0 }}>{area.id}</h3>
+        {area.id !== "Source" && onAreaDelete && (
+          <button
+            onClick={() => onAreaDelete(area.id)}
+            style={{
+              border: "none",
+              background: "none",
+              cursor: "pointer",
+              fontSize: "16px",
+              padding: "5px",
+            }}
+          >
+            ×
+          </button>
+        )}
+      </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
         {area.boxes.map((box) => (
           <DraggableBox
