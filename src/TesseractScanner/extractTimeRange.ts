@@ -29,7 +29,7 @@ const formatTime = (time: string) => {
     .padStart(2, "0")}`;
 };
 
-const dayMap: { [key: string]: string } = {
+export const dayMap: { [key: string]: string } = {
   T2: "Monday",
   T3: "Tuesday",
   T4: "Wednesday",

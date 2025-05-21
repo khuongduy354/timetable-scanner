@@ -1,31 +1,29 @@
-import { useState, type Dispatch, type SetStateAction, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   extractTimeRange,
   type TimeRange,
 } from "../TesseractScanner/extractTimeRange";
 import { ImagePreview } from "./ImagePreview";
+import { useApp } from "../context/AppContext";
 
-interface TimeScannerProps {
-  timeRanges: TimeRange[];
-  onTimeRangesUpdate: Dispatch<SetStateAction<TimeRange[]>>;
-}
+type TimeScannerProps = {
+  generateBoxes: () => void;
+};
 
-export const TimeScanner = ({
-  timeRanges,
-  onTimeRangesUpdate,
-}: TimeScannerProps) => {
+export const TimeScanner = ({ generateBoxes }: TimeScannerProps) => {
+  const { timeRanges, setTimeRanges } = useApp();
   const [result, setResult] = useState<string>("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
-
   const [cleanedText, setCleanedText] = useState<string>("");
 
   const renderCleanedText = () => {
+    const scannedCount = timeRanges.length;
+
     return (
       <div>
         <h3>Cleaned OCR Result:</h3>
         {cleanedText.split("\n").map((line, index) => (
           <div key={index}>
-            {/* if line contain one of element in time ranges, highlight it */}
             {timeRanges.some((range) => line.includes(range.start)) ? (
               <span style={{ backgroundColor: "yellow" }}>{line}</span>
             ) : (
@@ -33,6 +31,25 @@ export const TimeScanner = ({
             )}
           </div>
         ))}
+        <div
+          style={{
+            marginTop: "10px",
+            padding: "10px",
+            backgroundColor: "#f5f5f5",
+            borderRadius: "4px",
+          }}
+        >
+          <p>
+            ✅ Successfully scanned {scannedCount} time slots (highlighted in
+            yellow)
+          </p>
+          {scannedCount > 0 && (
+            <p>
+              ℹ️ Non-highlighted lines might contain times in different formats.
+              Consider checking them manually.
+            </p>
+          )}
+        </div>
       </div>
     );
   };
@@ -43,20 +60,23 @@ export const TimeScanner = ({
     setPreviewUrl(url);
 
     try {
-      const { timeRanges, cleanedOCR } = await extractTimeRange(file);
+      const { timeRanges: newRanges, cleanedOCR } = await extractTimeRange(
+        file
+      );
       setCleanedText(cleanedOCR);
-      if (timeRanges?.length) {
-        setResult("Time ranges found: " + timeRanges.length);
-        onTimeRangesUpdate(timeRanges);
-        console.log("Extracted time ranges:", timeRanges);
+      if (newRanges?.length) {
+        console.log("Scan successful, found ranges:", newRanges);
+        setResult(`✅ Found ${newRanges.length} time slots!`);
+        setTimeRanges(newRanges);
       } else {
-        setResult("No time range found");
-        onTimeRangesUpdate([]);
+        console.log("No time ranges found in scan");
+        setResult("❌ No time range found");
+        setTimeRanges([]);
         setCleanedText("");
       }
     } catch (error) {
       console.error("OCR failed:", error);
-      setResult("Failed to process image");
+      setResult("❌ Failed to process image");
     }
   };
 
@@ -87,11 +107,41 @@ export const TimeScanner = ({
   }, []);
 
   return (
-    <div>
-      <input type="file" accept="image/*" onChange={handleImageUpload} />
-      <p>Or paste an image (Ctrl+V)</p>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: "20px",
+        width: "100%",
+        maxWidth: "800px",
+        margin: "0 auto",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "15px",
+          marginBottom: "20px",
+        }}
+      >
+        <input type="file" accept="image/*" onChange={handleImageUpload} />
+        <p>Or paste an image (Ctrl+V)</p>
+      </div>
       <ImagePreview previewUrl={previewUrl} result={result} />
-      {cleanedText && renderCleanedText()}
+      {cleanedText && (
+        <>
+          {renderCleanedText()}
+          <button
+            onClick={generateBoxes}
+            style={{ width: "100%", marginTop: "20px" }}
+          >
+            Create boxes from scanned OCR
+          </button>
+        </>
+      )}
     </div>
   );
 };

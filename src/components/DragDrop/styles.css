@@ -1,0 +1,13 @@
+.drag-drop-box {
+  font-size: 12px;
+  padding: 8px;
+  margin: 4px;
+  min-height: 30px;
+  max-width: 120px;
+}
+
+.drag-drop-area {
+  min-height: 100px;
+  padding: 10px;
+  margin: 5px 0;
+}

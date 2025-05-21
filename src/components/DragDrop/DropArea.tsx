@@ -1,23 +1,18 @@
 import { useDrop } from "react-dnd";
-import { type TimeRange } from "../../TesseractScanner/extractTimeRange";
-import { type Area, type Box, ItemTypes } from "../../types/DragDrop";
 import { DraggableBox } from "./DraggableBox";
+import { type Area, type Box } from "../../types/DragDrop";
 
 interface DropAreaProps {
   area: Area;
-  onDrop: (item: any, areaId: string) => void;
+  onDrop: (item: Box, targetAreaId: string) => void;
   onDelete: (boxId: string) => void;
-  onEdit: (boxId: string, content: TimeRange) => void;
+  onEdit: (boxId: string, newContent: any) => void;
 }
 
-export const DropArea = ({ area, onDrop, onDelete, onEdit }: DropAreaProps) => {
+export function DropArea({ area, onDrop, onDelete, onEdit }: DropAreaProps) {
   const [{ isOver }, drop] = useDrop(() => ({
-    accept: ItemTypes.BOX,
-    drop: (item: Box, monitor) => {
-      // Prevent default drop behavior
-      if (monitor.didDrop()) {
-        return;
-      }
+    accept: "box",
+    drop: (item: Box) => {
       onDrop(item, area.id);
     },
     collect: (monitor) => ({
@@ -29,24 +24,24 @@ export const DropArea = ({ area, onDrop, onDelete, onEdit }: DropAreaProps) => {
     <div
       ref={drop}
       style={{
-        width: 200,
-        minHeight: 300,
-        padding: "1rem",
-        border: "1px solid #999",
+        padding: "8px",
         backgroundColor: isOver ? "#f0f0f0" : "white",
-        margin: "1rem",
+        border: "1px solid #ccc",
+        borderRadius: "4px",
+        minHeight: "100px",
       }}
     >
-      <h3>{area.id}</h3>
-      {area.boxes.map((box) => (
-        <DraggableBox
-          key={box.id}
-          box={box}
-          onDrop={onDrop}
-          onDelete={onDelete}
-          onEdit={onEdit}
-        />
-      ))}
+      <h3 style={{ margin: "0 0 8px 0", fontSize: "14px" }}>{area.id}</h3>
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        {area.boxes.map((box) => (
+          <DraggableBox
+            key={box.id}
+            box={box}
+            onDelete={onDelete}
+            onEdit={onEdit}
+          />
+        ))}
+      </div>
     </div>
   );
-};
+}

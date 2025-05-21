@@ -1,18 +1,16 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { type TimeRange } from "../../TesseractScanner/extractTimeRange";
+import {
+  dayMap,
+  type TimeRange,
+} from "../../TesseractScanner/extractTimeRange";
 import { type Area, type Box, type DragDropHandle } from "../../types/DragDrop";
 import { DropArea } from "./DropArea";
+import { useApp } from "../../context/AppContext";
 
 const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
-  const [areas, setAreas] = useState<Area[]>([
-    {
-      id: "Source",
-      boxes: [],
-    },
-  ]);
-
+  const { areas, setAreas } = useApp(); // Move areas state to context
   const [newAreaName, setNewAreaName] = useState("");
   const [selectedAreaId, setSelectedAreaId] = useState("Source");
 
@@ -106,13 +104,44 @@ const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
   const handleCreateBox = (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.target as HTMLFormElement;
-    const day = (form.elements.namedItem("day") as HTMLInputElement).value;
-    const start = (form.elements.namedItem("start") as HTMLInputElement).value;
-    const end = (form.elements.namedItem("end") as HTMLInputElement).value;
+    const input = (form.elements.namedItem("timeSlot") as HTMLTextAreaElement)
+      .value;
 
-    if (day && start && end) {
-      addBoxToArea(selectedAreaId, { day, start, end });
-      form.reset();
+    // Split input into lines and process each line
+    const lines = input.split("\n").filter((line) => line.trim());
+
+    for (const line of lines) {
+      const [day, timeRange] = line.trim().split(" ");
+      if (!day || !timeRange) {
+        alert(
+          `Invalid format in line: ${line}\nPlease use format: T2 15:30-17:30`
+        );
+        continue;
+      }
+
+      const [start, end] = timeRange.split("-");
+      if (!start || !end) {
+        alert(`Invalid time range in line: ${line}\nUse format: 15:30-17:30`);
+        continue;
+      }
+
+      addBoxToArea(selectedAreaId, {
+        day: day.startsWith("T") ? dayMap[day] || day : day,
+        start,
+        end,
+      });
+    }
+    form.reset();
+  };
+
+  const handleDeleteArea = (areaId: string) => {
+    // Prevent deletion of Source area
+    if (areaId === "Source") return;
+
+    setAreas((prevAreas) => prevAreas.filter((area) => area.id !== areaId));
+    // Reset selection to Source if deleted area was selected
+    if (selectedAreaId === areaId) {
+      setSelectedAreaId("Source");
     }
   };
 
@@ -123,37 +152,104 @@ const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div>
-        <div style={{ margin: "1rem" }}>
-          <form onSubmit={handleAddArea} style={{ marginBottom: "1rem" }}>
-            <input
-              value={newAreaName}
-              onChange={(e) => setNewAreaName(e.target.value)}
-              placeholder="New area name"
-            />
-            <button type="submit">Add Area</button>
-          </form>
-
-          <select
-            value={selectedAreaId}
-            onChange={(e) => setSelectedAreaId(e.target.value)}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+          maxHeight: "90vh", // Increased from 70vh
+          alignItems: "center",
+          width: "100%",
+        }}
+      >
+        {/* Controls Section */}
+        <div
+          style={{
+            padding: "15px",
+            backgroundColor: "#f5f5f5",
+            borderRadius: "6px",
+            width: "100%",
+            maxWidth: "1200px", // Increased from 800px
+          }}
+        >
+          {/* Area Controls */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "15px",
+              marginBottom: "15px",
+            }}
           >
-            {areas.map((area) => (
-              <option key={area.id} value={area.id}>
-                {area.id}
-              </option>
-            ))}
-          </select>
+            <form
+              onSubmit={handleAddArea}
+              style={{ display: "flex", gap: "10px" }}
+            >
+              <input
+                value={newAreaName}
+                onChange={(e) => setNewAreaName(e.target.value)}
+                placeholder="New area name"
+                style={{ flex: 1 }}
+              />
+              <button type="submit">Add Area</button>
+            </form>
 
-          <form onSubmit={handleCreateBox} style={{ marginTop: "1rem" }}>
-            <input name="day" placeholder="Day" required />
-            <input name="start" placeholder="Start time" required />
-            <input name="end" placeholder="End time" required />
-            <button type="submit">Create Box</button>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <select
+                value={selectedAreaId}
+                onChange={(e) => setSelectedAreaId(e.target.value)}
+                style={{ flex: 1, padding: "5px" }}
+              >
+                {areas.map((area) => (
+                  <option key={area.id} value={area.id}>
+                    {area.id}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => handleDeleteArea(selectedAreaId)}
+                disabled={selectedAreaId === "Source"}
+                style={{ padding: "5px 10px" }}
+              >
+                Delete Area
+              </button>
+            </div>
+          </div>
+
+          {/* Simplified Box Creation Form */}
+          <form onSubmit={handleCreateBox}>
+            <div style={{ display: "flex", gap: "10px" }}>
+              <textarea
+                name="timeSlot"
+                placeholder="T2 15:30-17:30&#10;T3 13:30-15:30&#10;T4 07:30-09:30"
+                required
+                style={{
+                  flex: 1,
+                  padding: "5px",
+                  minHeight: "80px",
+                  resize: "vertical",
+                }}
+              />
+              <button type="submit">Create Boxes</button>
+            </div>
           </form>
         </div>
 
-        <div style={{ display: "flex", justifyContent: "center" }}>
+        {/* Drop Areas Section */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", // Increased from 200px
+            gap: "15px",
+            padding: "10px",
+            backgroundColor: "#f9f9f9",
+            borderRadius: "6px",
+            overflow: "auto",
+            width: "100%",
+            maxWidth: "1200px", // Increased from 800px
+            maxHeight: "1000px", // Increased from 600px to 1000px for more vertical space
+          }}
+        >
           {areas.map((area) => (
             <DropArea
               key={area.id}
