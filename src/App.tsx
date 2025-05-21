@@ -8,7 +8,13 @@ import { AppProvider, useApp } from "./context/AppContext";
 
 function AppContent() {
   const dragDropRef = useRef<DragDropHandle>(null);
-  const { timeRanges, calendarData, setCalendarData, setAreas } = useApp();
+  const {
+    timeRangesByLine,
+    timeRanges,
+    calendarData,
+    setCalendarData,
+    setAreas,
+  } = useApp();
   const [shouldGenerateBoxes, setShouldGenerateBoxes] = useState(false);
   const [visibleSections, setVisibleSections] = useState({
     scanner: true,
@@ -52,8 +58,38 @@ function AppContent() {
     }
   }, [shouldGenerateBoxes]);
 
-  const generateBoxes = () => {
-    setShouldGenerateBoxes(true);
+  const generateBoxes = (shouldSplit: boolean) => {
+    if (!dragDropRef.current) return;
+
+    if (!shouldSplit) {
+      setShouldGenerateBoxes(true);
+      return;
+    }
+
+    const namedArea: string[] = [];
+    timeRangesByLine.forEach((line) => {
+      let areaName = "Untitled";
+      const areas = dragDropRef.current.getAreasState();
+      let isNameExist =
+        areas.find((area) => area.id === areaName) ||
+        namedArea.includes(areaName);
+
+      let count = 1;
+      while (isNameExist) {
+        areaName = `Untitled ${count}`;
+        count++;
+        isNameExist =
+          areas.find((area) => area.id === areaName) ||
+          namedArea.includes(areaName);
+      }
+
+      dragDropRef.current?.addArea(areaName);
+      namedArea.push(areaName);
+
+      for (const timeRange of line) {
+        dragDropRef.current?.addBoxToArea(areaName, timeRange);
+      }
+    });
   };
 
   const resetCalendar = () => {

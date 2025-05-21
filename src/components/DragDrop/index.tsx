@@ -9,6 +9,17 @@ import { type Area, type Box, type DragDropHandle } from "../../types/DragDrop";
 import { DropArea } from "./DropArea";
 import { useApp } from "../../context/AppContext";
 
+export interface Area {
+  id: string;
+  boxes: Box[];
+}
+
+export interface DragDropHandle {
+  addBoxToArea: (areaId: string, content: TimeRange) => void;
+  getAreasState: () => Area[];
+  addArea: (areaName: string) => void;
+}
+
 const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
   const { areas, setAreas } = useApp(); // Move areas state to context
   const [newAreaName, setNewAreaName] = useState("");
@@ -148,6 +159,15 @@ const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
   useImperativeHandle(ref, () => ({
     addBoxToArea,
     getAreasState: () => areas,
+    addArea: (areaName: string) => {
+      setAreas((prev) => {
+        // Check if area already exists
+        if (prev.some((area) => area.id === areaName)) {
+          return prev;
+        }
+        return [...prev, { id: areaName, boxes: [] }];
+      });
+    },
   }));
 
   return (

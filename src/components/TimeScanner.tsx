@@ -7,14 +7,20 @@ import { ImagePreview } from "./ImagePreview";
 import { useApp } from "../context/AppContext";
 
 type TimeScannerProps = {
-  generateBoxes: () => void;
+  generateBoxes: (shouldSplitIntoArea: boolean) => void;
 };
 
 export const TimeScanner = ({ generateBoxes }: TimeScannerProps) => {
-  const { timeRanges, setTimeRanges } = useApp();
+  const {
+    timeRanges,
+    setTimeRanges,
+    cleanedText,
+    setCleanedText,
+    setTimeRangesByLine,
+  } = useApp();
   const [result, setResult] = useState<string>("");
   const [previewUrl, setPreviewUrl] = useState<string>("");
-  const [cleanedText, setCleanedText] = useState<string>("");
+  const [shouldSplitIntoArea, setShouldSplitIntoArea] = useState(false);
 
   const renderCleanedText = () => {
     const scannedCount = timeRanges.length;
@@ -24,7 +30,9 @@ export const TimeScanner = ({ generateBoxes }: TimeScannerProps) => {
         <h3>Cleaned OCR Result:</h3>
         {cleanedText.split("\n").map((line, index) => (
           <div key={index}>
-            {timeRanges.some((range) => line.includes(range.start)) ? (
+            {timeRanges.some((range) =>
+              line.includes(range.start + "-" + range.end)
+            ) ? (
               <span style={{ backgroundColor: "yellow" }}>{line}</span>
             ) : (
               line
@@ -60,14 +68,18 @@ export const TimeScanner = ({ generateBoxes }: TimeScannerProps) => {
     setPreviewUrl(url);
 
     try {
-      const { timeRanges: newRanges, cleanedOCR } = await extractTimeRange(
-        file
-      );
+      const {
+        timeRanges: newRanges,
+        cleanedOCR,
+        timeRangesByLine,
+      } = await extractTimeRange(file);
+      console.log(timeRangesByLine);
       setCleanedText(cleanedOCR);
       if (newRanges?.length) {
         console.log("Scan successful, found ranges:", newRanges);
         setResult(`✅ Found ${newRanges.length} time slots!`);
         setTimeRanges(newRanges);
+        setTimeRangesByLine(timeRangesByLine);
       } else {
         console.log("No time ranges found in scan");
         setResult("❌ No time range found");
@@ -134,8 +146,24 @@ export const TimeScanner = ({ generateBoxes }: TimeScannerProps) => {
       {cleanedText && (
         <>
           {renderCleanedText()}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              marginTop: "10px",
+            }}
+          >
+            <input
+              type="checkbox"
+              id="splitAreas"
+              checked={shouldSplitIntoArea}
+              onChange={(e) => setShouldSplitIntoArea(e.target.checked)}
+            />
+            <label htmlFor="splitAreas">Split into separate areas</label>
+          </div>
           <button
-            onClick={generateBoxes}
+            onClick={() => generateBoxes(shouldSplitIntoArea)}
             style={{ width: "100%", marginTop: "20px" }}
           >
             Create boxes from scanned OCR

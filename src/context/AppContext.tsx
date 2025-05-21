@@ -18,6 +18,10 @@ interface AppContextType {
   setCalendarData: (data: WeeklyCalendar | null) => void;
   areas: Area[];
   setAreas: (areas: Area[]) => void;
+  cleanedText: string;
+  setCleanedText: (text: string) => void;
+  timeRangesByLine: TimeRange[][];
+  setTimeRangesByLine: (ranges: TimeRange[][]) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -35,6 +39,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [timeRanges, setTimeRanges] = useState<TimeRange[]>(() =>
     loadFromStorage("timeRanges", [])
   );
+  const [timeRangesByLine, setTimeRangesByLine] = useState<TimeRange[][]>(() =>
+    loadFromStorage("timeRangesByLine", [])
+  );
   const [activeTab, setActiveTab] = useState<"scanner" | "manager">(() =>
     loadFromStorage("activeTab", "manager")
   );
@@ -49,6 +56,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       },
     ])
   );
+  const [cleanedText, setCleanedText] = useState("");
 
   // Persist state changes to localStorage
   useEffect(() => {
@@ -78,6 +86,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setCalendarData,
         areas,
         setAreas,
+        cleanedText,
+        setCleanedText,
+        setTimeRangesByLine,
+        timeRangesByLine,
       }}
     >
       {children}

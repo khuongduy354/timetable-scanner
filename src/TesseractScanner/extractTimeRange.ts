@@ -6,8 +6,9 @@ export interface TimeRange {
   end: string;
 }
 export interface ScanResult {
-  timeRanges: TimeRange[] | null;
+  timeRanges: TimeRange[];
   cleanedOCR: string;
+  timeRangesByLine: TimeRange[][];
 }
 
 const isValidTime = (time: string): boolean => {
@@ -80,37 +81,37 @@ export async function extractTimeRange(imageFile: File): Promise<ScanResult> {
     const timePattern =
       /(?:T([2-7]))?\s*(\d{1,2}[:.]?\d{2})[:.]?\s*[-]?\s*(\d{1,2}[:.]?\d{2})/gi;
     const uncleandMatches = Array.from(text.matchAll(timePattern));
-    const matches = cleanedText.matchAll(timePattern);
+    const matchesByLine = cleanedText
+      .split("\n")
+      .map((line) => Array.from(line.matchAll(timePattern)));
 
-    // for (const m of Array.from(exactMatches)) {
-    //   console.log(m);
-    //   const index = remainingText.indexOf(m[0]);
-    //   if (index !== -1) {
-    //     remainingText =
-    //       remainingText.substring(0, index) +
-    //       remainingText.substring(index + m[0].length);
-    //   }
-    // }
     console.log(uncleandMatches);
 
     const filteredOutMatches: RegExpExecArray[] = [];
-    const allMatches = Array.from(matches);
-    console.log("Found matches:", allMatches.length);
-
-    // Filter valid times only
-    const validMatches = allMatches.filter((match) => {
-      if (isValidTime(match[2]) && isValidTime(match[3])) return true;
-      filteredOutMatches.push(match);
-      return false;
+    let validMatchesByLine = matchesByLine.map((lineMatches) => {
+      const arr = lineMatches.filter((match) => {
+        if (isValidTime(match[2]) && isValidTime(match[3])) return true;
+        filteredOutMatches.push(match);
+        return false;
+      });
+      if (arr.length === 0) return undefined;
+      return arr;
     });
+    validMatchesByLine = validMatchesByLine.filter(
+      (line) => line !== undefined
+    );
 
+    const validMatches = validMatchesByLine.flat();
+    console.log("Found matches:", validMatches.length);
     console.log("Filtered out matches:", filteredOutMatches);
-
-    // Add debug logging
 
     if (validMatches.length === 0) {
       console.warn("No valid time ranges found");
-      return { timeRanges: null, cleanedOCR: cleanedText };
+      return {
+        timeRanges: [],
+        cleanedOCR: cleanedText,
+        timeRangesByLine: [],
+      };
     }
 
     const results = validMatches.map((match) => {
@@ -123,11 +124,24 @@ export async function extractTimeRange(imageFile: File): Promise<ScanResult> {
       return timeRange;
     });
 
+    const timeRangesByLine = validMatchesByLine.map((lineMatches) =>
+      lineMatches.map((match) => {
+        const dayKey = match[1] ? `T${match[1]}` : null;
+        const timeRange = {
+          day: dayKey && dayMap[dayKey] ? dayMap[dayKey] : "Unknown",
+          start: formatTime(match[2]),
+          end: formatTime(match[3]),
+        };
+        return timeRange;
+      })
+    );
+
     // Before return, add visualization
 
     return {
       timeRanges: results,
       cleanedOCR: cleanedText,
+      timeRangesByLine,
     };
   } finally {
     await worker.terminate();
