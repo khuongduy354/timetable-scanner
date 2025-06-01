@@ -5,28 +5,25 @@ import {
   dayMap,
   type TimeRange,
 } from "../../TesseractScanner/extractTimeRange";
-import { type Area, type Box, type DragDropHandle } from "../../types/DragDrop";
+import { type Box, type Area as ImportedArea } from "../../types/DragDrop";
 import { DropArea } from "./DropArea";
 import { useApp } from "../../context/AppContext";
 
-export interface Area {
-  id: string;
-  boxes: Box[];
-}
+// Change Area to local interface
 
 export interface DragDropHandle {
   addBoxToArea: (areaId: string, content: TimeRange) => void;
-  getAreasState: () => Area[];
+  getAreasState: () => ImportedArea[];
   addArea: (areaName: string) => void;
 }
 
 const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
-  const { areas, setAreas } = useApp(); // Move areas state to context
+  const { areas, setAreas } = useApp();
   const [newAreaName, setNewAreaName] = useState("");
   const [selectedAreaId, setSelectedAreaId] = useState("Source");
 
   const addBoxToArea = (areaId: string, content: TimeRange) => {
-    setAreas((prevAreas) =>
+    setAreas((prevAreas: ImportedArea[]) =>
       prevAreas.map((area) => {
         if (area.id === areaId) {
           return {
@@ -57,7 +54,7 @@ const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
   };
 
   const handleDrop = (item: Box, targetAreaId: string) => {
-    setAreas((prevAreas) => {
+    setAreas((prevAreas: ImportedArea[]) => {
       const sourceArea = prevAreas.find((area) =>
         area.boxes.some((box) => box.id === item.id)
       );
@@ -68,7 +65,7 @@ const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
         return prevAreas;
       }
 
-      const newAreas = prevAreas.map((area) => {
+      return prevAreas.map((area) => {
         if (area.id === sourceArea.id) {
           return {
             ...area,
@@ -87,13 +84,11 @@ const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
         }
         return area;
       });
-
-      return newAreas;
     });
   };
 
   const handleDeleteBox = (boxId: string) => {
-    setAreas((prevAreas) =>
+    setAreas((prevAreas: ImportedArea[]) =>
       prevAreas.map((area) => ({
         ...area,
         boxes: area.boxes.filter((box) => box.id !== boxId),
@@ -102,7 +97,7 @@ const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
   };
 
   const handleEditBox = (boxId: string, newContent: TimeRange) => {
-    setAreas((prevAreas) =>
+    setAreas((prevAreas: ImportedArea[]) =>
       prevAreas.map((area) => ({
         ...area,
         boxes: area.boxes.map((box) =>
@@ -147,14 +142,16 @@ const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
 
   const handleDeleteArea = (areaId: string) => {
     if (areaId === "Source") return;
-    setAreas((prevAreas) => prevAreas.filter((area) => area.id !== areaId));
+    setAreas((prevAreas: ImportedArea[]) =>
+      prevAreas.filter((area) => area.id !== areaId)
+    );
   };
 
   useImperativeHandle(ref, () => ({
     addBoxToArea,
     getAreasState: () => areas,
     addArea: (areaName: string) => {
-      setAreas((prev) => {
+      setAreas((prev: ImportedArea[]) => {
         // Check if area already exists
         if (prev.some((area) => area.id === areaName)) {
           return prev;
@@ -281,5 +278,5 @@ const DragDrop = forwardRef<DragDropHandle>((_, ref) => {
   );
 });
 
-export type { Area, Box, DragDropHandle };
+export type { ImportedArea as Area, Box };
 export default DragDrop;

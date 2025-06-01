@@ -29,7 +29,7 @@ export function DropArea({
 
   return (
     <div
-      ref={drop}
+      ref={drop as unknown as React.LegacyRef<HTMLDivElement>}
       style={{
         padding: "8px",
         backgroundColor: isOver ? "#f0f0f0" : "white",
@@ -71,6 +71,7 @@ export function DropArea({
             box={box}
             onDelete={onDelete}
             onEdit={onEdit}
+            onDrop={onDrop} // Add missing onDrop prop
           />
         ))}
       </div>

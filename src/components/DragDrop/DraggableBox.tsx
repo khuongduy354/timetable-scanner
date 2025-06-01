@@ -33,7 +33,7 @@ export const DraggableBox = ({
 
   return (
     <div
-      ref={drag}
+      ref={drag as unknown as React.LegacyRef<HTMLDivElement>}
       style={{
         padding: "6px",
         backgroundColor: isDragging ? "#f0f0f0" : "#e9ecef",

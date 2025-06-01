@@ -1,10 +1,5 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-} from "react";
+import { createContext, useContext, useState, useEffect } from "react";
+import type { Dispatch, ReactNode } from "react";
 import { type TimeRange } from "../TesseractScanner/extractTimeRange";
 import { type WeeklyCalendar } from "../types/Calendar";
 import { type Area } from "../types/DragDrop";
@@ -17,7 +12,7 @@ interface AppContextType {
   calendarData: WeeklyCalendar | null;
   setCalendarData: (data: WeeklyCalendar | null) => void;
   areas: Area[];
-  setAreas: (areas: Area[]) => void;
+  setAreas: Dispatch<React.SetStateAction<Area[]>>;
   cleanedText: string;
   setCleanedText: (text: string) => void;
   timeRangesByLine: TimeRange[][];

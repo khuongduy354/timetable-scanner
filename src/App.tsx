@@ -2,9 +2,9 @@ import { useRef, useState, useEffect } from "react";
 import DragDrop, { type DragDropHandle } from "./components/DragDrop/index";
 import { TimeScanner } from "./components/TimeScanner";
 import { type WeeklyCalendar } from "./types/Calendar";
-import { type TimeRange } from "./TesseractScanner/extractTimeRange";
 import { CalendarView } from "./components/CalendarView";
 import { AppProvider, useApp } from "./context/AppContext";
+import { type Area } from "./components/DragDrop/index";
 
 function AppContent() {
   const dragDropRef = useRef<DragDropHandle>(null);
@@ -40,7 +40,7 @@ function AppContent() {
 
       try {
         // First, clear the Source area
-        setAreas((prev) =>
+        setAreas((prev: Area[]) =>
           prev.map((area) =>
             area.id === "Source" ? { ...area, boxes: [] } : area
           )
