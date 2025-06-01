@@ -31,6 +31,7 @@ npm run dev
 - If scans miss data, check the hightlighted printed text below the OCR, to manually add in missing time ranges 
 - Check console on browsers (F12) for more infos 
 - Supported format is as follow: ![](./public/us7.png)
+
 Dates =  T + number (for e.g Monday = T2)  
 Times (24h format)= hour:minute-hour:minute (for e.g 7:30-11:30) 
 
